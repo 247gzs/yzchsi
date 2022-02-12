@@ -52,8 +52,8 @@ def yz_school_info_spider(item_list):
         school_url = item['school_url']
         content = requests.get(school_url, headers=settings.headers).content.decode()
         soup = BeautifulSoup(content, features='html.parser')
-        soup = soup.find_all('table', **{'class': 'zsml-condition'})[0]
-        for data in soup.find_all('tr'):
+        soup_1 = soup.find_all('table', **{'class': 'zsml-condition'})[0]
+        for data in soup_1.find_all('tr'):
             td_list = []
             for td in data.find_all('td'):
                 td_list.append(td.text.strip())
@@ -62,6 +62,14 @@ def yz_school_info_spider(item_list):
                 x = x.strip().replace('：', '')
                 y = td_list.pop(0)
                 item[x] = y
+        soup_2 = soup.find_all('div', **{"class": 'zsml-result'})[0]
+        res_list = []
+        for tr in soup_2.find_all('tr')[1:]:
+            td_list = []
+            for td in tr.find_all('td'):
+                td_list.append(td.text.strip().split('\n')[0].strip())
+            res_list.append(','.join(td_list) + '\n')
+        item['考试范围'] = ''.join(res_list)
     utils.save_json(item_list)
     return item_list
 
@@ -85,7 +93,7 @@ def transfer(item_list):
 def save_excel(item_list):
     headers = [
         '学校', '学校链接', '省份', '招生单位', '考试方式', '院系所', '专业', '学习方式',
-        '研究方向', '指导老师', '拟招人数', '备注'
+        '研究方向', '指导老师', '拟招人数', '考试范围', '备注'
     ]
     with open('学校信息.csv', 'w') as f:
         f_csv = csv.writer(f)
